@@ -112,7 +112,8 @@ class GtpConnection:
                 self.commands[command_name](args)
             except Exception as e:
                 self.debug_msg("Error executing command {}\n".format(str(e)))
-                self.debug_msg("Stack Trace:\n{}\n".format(traceback.format_exc()))
+                self.debug_msg("Stack Trace:\n{}\n".format(
+                    traceback.format_exc()))
                 raise e
         else:
             self.debug_msg("Unknown command: {}\n".format(command_name))
@@ -207,6 +208,7 @@ class GtpConnection:
         """ We already implemented this function for Assignment 1 """
         self.respond(str(self.board.size))
 
+    # TODO
     def gogui_rules_legal_moves_cmd(self, args):
         """ Implement this function for Assignment 1 """
         self.respond()
@@ -236,11 +238,13 @@ class GtpConnection:
                     assert False
             str += '\n'
         self.respond(str)
-            
+
+    # TODO
     def gogui_rules_final_result_cmd(self, args):
         """ Implement this function for Assignment 1 """
         self.respond("unknown")
 
+    # TODO
     def play_cmd(self, args):
         """ Modify this function for Assignment 1 """
         """
@@ -260,7 +264,8 @@ class GtpConnection:
                 move = coord_to_point(coord[0], coord[1], self.board.size)
             else:
                 self.error(
-                    "Error executing move {} converted from {}".format(move, args[1])
+                    "Error executing move {} converted from {}".format(
+                        move, args[1])
                 )
                 return
             if not self.board.play_move(move, color):
@@ -274,6 +279,7 @@ class GtpConnection:
         except Exception as e:
             self.respond("Error: {}".format(str(e)))
 
+    # TODO
     def genmove_cmd(self, args):
         """ Modify this function for Assignment 1 """
         """ generate a move for color args[0] in {'b','w'} """
@@ -319,6 +325,7 @@ class GtpConnection:
 
     """ Assignment 1: ignore this command, implement 
         gogui_rules_legal_moves_cmd  above instead """
+
     def legal_moves_cmd(self, args):
         """
         List legal moves for color args[0] in {'b','w'}
