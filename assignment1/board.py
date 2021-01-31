@@ -292,4 +292,4 @@ class GoBoard(object):
             return
 
     # TODO: dectate the win,draw,loss
-    
+    #def 
