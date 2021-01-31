@@ -211,8 +211,7 @@ class GtpConnection:
     # TODO
     def gogui_rules_legal_moves_cmd(self, args):
         """ Implement this function for Assignment 1 """
-        board_color = args[0].lower()
-        color = color_to_int(board_color)
+        color = self.board.current_player
         moves = GoBoardUtil.generate_legal_moves(self.board, color)
         gtp_moves = []
         for move in moves:
@@ -262,11 +261,6 @@ class GtpConnection:
             board_color = args[0].lower()
             board_move = args[1]
             color = color_to_int(board_color)
-            if args[1].lower() == "pass":
-                self.board.play_move(PASS, color)
-                self.board.current_player = GoBoardUtil.opponent(color)
-                self.respond()
-                return
             coord = move_to_coord(args[1], self.board.size)
             if coord:
                 move = coord_to_point(coord[0], coord[1], self.board.size)
