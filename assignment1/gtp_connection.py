@@ -249,6 +249,7 @@ class GtpConnection:
     # TODO
     def gogui_rules_final_result_cmd(self, args):
         """ Implement this function for Assignment 1 """
+        
         self.respond("unknown")
 
     # TODO
@@ -262,16 +263,19 @@ class GtpConnection:
             board_move = args[1]
             color = color_to_int(board_color)
             coord = move_to_coord(args[1], self.board.size)
+            # wrong color
+            if color != self.board.current_player:
+                self.error("Illegal Move: {}. Wrong color.".format(board_move))
+                return
+            # wrong coordinate
             if coord:
                 move = coord_to_point(coord[0], coord[1], self.board.size)
             else:
-                self.error(
-                    "Error executing move {} converted from {}".format(
-                        move, args[1])
-                )
+                self.error("Illegal Move: {}. Wrong coordinate.".format(board_move))
                 return
+            # occupied (play move if not)
             if not self.board.play_move(move, color):
-                self.respond("Illegal Move: {}".format(board_move))
+                self.respond("Illegal Move: {}. Occupied.".format(board_move))
                 return
             else:
                 self.debug_msg(

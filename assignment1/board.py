@@ -292,4 +292,8 @@ class GoBoard(object):
             return
 
     # TODO: dectate the win,draw,loss
-    #def 
+    def check_win(self, point, color):
+        """ Return True if current_player wins. Otherwise return False"""
+        if _win(point, color) or _diag_win(point, color):
+            return True
+        return False
