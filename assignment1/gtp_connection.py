@@ -264,9 +264,9 @@ class GtpConnection:
             board_color = args[0].lower()
             board_move = args[1]
             # wrong color
-            try:
+            if board_color == 'b' or board_color == 'w':
                 color = color_to_int(board_color)
-            except Exception as _:
+            else:
                 self.respond(
                     "illegal move: \"{}\" wrong color".format(board_color))
                 return
