@@ -263,24 +263,23 @@ class GtpConnection:
         try:
             board_color = args[0].lower()
             board_move = args[1]
-
             # wrong color
             try:
                 color = color_to_int(board_color)
             except Exception as _:
-                self.error(
+                self.respond(
                     "illegal move: \"{}\" wrong color".format(board_color))
                 return
-
             # wrong coordinate
             try:
                 coord = move_to_coord(args[1], self.board.size)
             except Exception as _:
-                self.error(
+                self.respond(
                     "illegal move: \"{}\" wrong coordinate".format(board_move))
                 return
+            move = coord_to_point(coord[0], coord[1], self.board.size)
             # occupied (play move if not)
-            if not self.board.play_move(coord, color):
+            if not self.board.play_move(move, color):
                 self.respond(
                     "illegal move: \"{}\" occupied".format(board_move))
                 return
