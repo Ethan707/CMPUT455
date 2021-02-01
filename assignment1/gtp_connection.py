@@ -212,6 +212,9 @@ class GtpConnection:
     def gogui_rules_legal_moves_cmd(self, args):
         """ Implement this function for Assignment 1 """
         color = self.board.current_player
+        if self.board.result() != "unknown":
+            self.respond("")
+            return
         moves = GoBoardUtil.generate_legal_moves(self.board, color)
         gtp_moves = []
         for move in moves:
@@ -249,8 +252,7 @@ class GtpConnection:
     # TODO
     def gogui_rules_final_result_cmd(self, args):
         """ Implement this function for Assignment 1 """
-        
-        self.respond("unknown")
+        self.respond(self.board.result())
 
     # TODO
     def play_cmd(self, args):
@@ -261,21 +263,26 @@ class GtpConnection:
         try:
             board_color = args[0].lower()
             board_move = args[1]
-            color = color_to_int(board_color)
-            coord = move_to_coord(args[1], self.board.size)
+
             # wrong color
-            if color != self.board.current_player:
-                self.error("Illegal Move: {}. Wrong color.".format(board_move))
+            try:
+                color = color_to_int(board_color)
+            except Exception as _:
+                self.error(
+                    "illegal move: \"{}\" wrong color".format(board_color))
                 return
+
             # wrong coordinate
-            if coord:
-                move = coord_to_point(coord[0], coord[1], self.board.size)
-            else:
-                self.error("Illegal Move: {}. Wrong coordinate.".format(board_move))
+            try:
+                coord = move_to_coord(args[1], self.board.size)
+            except Exception as _:
+                self.error(
+                    "illegal move: \"{}\" wrong coordinate".format(board_move))
                 return
             # occupied (play move if not)
-            if not self.board.play_move(move, color):
-                self.respond("Illegal Move: {}. Occupied.".format(board_move))
+            if not self.board.play_move(coord, color):
+                self.respond(
+                    "illegal move: \"{}\" occupied".format(board_move))
                 return
             else:
                 self.debug_msg(
@@ -292,6 +299,16 @@ class GtpConnection:
         board_color = args[0].lower()
         color = color_to_int(board_color)
         move = self.go_engine.get_move(self.board, color)
+        opponent = "black" if color == WHITE else "white"
+        # if the opponent is win
+        if self.board.result() == opponent:
+            self.respond("resign")
+            return
+        # if the game is full
+        if move == None:
+            self.respond("pass")
+            return
+        # if it still have moves
         move_coord = point_to_coord(move, self.board.size)
         move_as_string = format_point(move_coord)
         if self.board.is_legal(move, color):

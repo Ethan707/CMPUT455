@@ -208,8 +208,6 @@ class GoBoard(object):
         assert is_black_white(color)
         if self.board[point] != EMPTY:
             return False
-        if color != self.current_player:
-            return False
         self.board[point] = color
         self.current_player = GoBoardUtil.opponent(color)
         self.last2_move = self.last_move
@@ -294,6 +292,17 @@ class GoBoard(object):
     # TODO: dectate the win,draw,loss
     def check_win(self, point, color):
         """ Return True if current_player wins. Otherwise return False"""
-        if _win(point, color) or _diag_win(point, color):
+        if self._win(point, color) or self._diag_win(point, color):
             return True
         return False
+
+    def result(self):
+        color = GoBoardUtil.opponent(self.current_player)
+        if len(self.get_empty_points()) == 0:
+            return "draw"
+        if self.check_win(self.last_move, color):
+            if color == BLACK:
+                return "black"
+            if color == WHITE:
+                return "white"
+        return "unknown"
