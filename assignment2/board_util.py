@@ -5,7 +5,6 @@ Utility functions for Go board.
 
 import numpy as np
 import random
-
 """
 Encoding of colors on and off a Go board.
 FLODDFILL is used internally for a temporary marker
@@ -29,24 +28,20 @@ A GO_POINT is a point on a Go board.
 It is encoded as a 32-bit integer, using the numpy type.
 """
 GO_POINT = np.int32
-
 """
 Encoding of special pass move
 """
 PASS = None
-
 """
 Encoding of "not a real point", used as a marker
 """
 NULLPOINT = 0
-
 """
 The largest board we allow. 
 To support larger boards the coordinate printing in
 GtpConnection.format_point needs to be changed.
 """
 MAXSIZE = 25
-
 """
 where1d: Helper function for using np.where with 1-d arrays.
 The result of np.where is a tuple which contains the indices 
@@ -54,6 +49,8 @@ of elements that fulfill the condition.
 For 1-d arrays, this is a singleton tuple.
 The [0] indexing is needed to extract the result from the singleton tuple.
 """
+
+
 def where1d(condition):
     return np.where(condition)[0]
 
@@ -155,9 +152,9 @@ class GoBoardUtil(object):
         color = board.current_player
         moves = []
         for move in empty_points:
-            legal = not (
-                use_eye_filter and board.is_eye(move, color)
-            ) and board.is_legal(move, color)
+            legal = not (use_eye_filter
+                         and board.is_eye(move, color)) and board.is_legal(
+                             move, color)
             if legal:
                 moves.append(move)
         return moves
@@ -178,5 +175,5 @@ class GoBoardUtil(object):
         board2d = np.zeros((size, size), dtype=GO_POINT)
         for row in range(size):
             start = goboard.row_start(row + 1)
-            board2d[row, :] = goboard.board[start : start + size]
+            board2d[row, :] = goboard.board[start:start + size]
         return board2d

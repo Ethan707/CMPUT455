@@ -8,6 +8,7 @@ at the University of Edinburgh.
 """
 import traceback
 from sys import stdin, stdout, stderr
+import time
 from board_util import (
     GoBoardUtil,
     BLACK,
@@ -37,6 +38,7 @@ class GtpConnection:
         self._debug_mode = debug_mode
         self.go_engine = go_engine
         self.board = board
+        self.seconds = 1
         self.commands = {
             "protocol_version": self.protocol_version_cmd,
             "quit": self.quit_cmd,
@@ -278,12 +280,21 @@ class GtpConnection:
 
     # TODO: Add for Assignment 2
     def timelimit_cmd(self, args):
-        pass
+        try:
+            assert args[0].isdigit()
+            assert 1 <= int(args[0])
+            assert 100 >= int(args[0])
+            self.seconds = int(args[0])
+        except Exception as e:
+            self.seconds = 1
 
     # TODO: Add for Assignment 2
     def solve_cmd(self, args):
         # return b,w,draw,unknown
-        pass
+        start = time.time()
+        while (time.time() - start) < self.seconds:
+            # do something
+            pass
 
     def gogui_rules_game_id_cmd(self, args):
         self.respond("Gomoku")
