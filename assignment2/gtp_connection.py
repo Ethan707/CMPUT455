@@ -38,7 +38,7 @@ class GtpConnection:
         self._debug_mode = debug_mode
         self.go_engine = go_engine
         self.board = board
-        self.seconds = 1
+        self.time = 1
         self.commands = {
             "protocol_version": self.protocol_version_cmd,
             "quit": self.quit_cmd,
@@ -284,17 +284,20 @@ class GtpConnection:
             assert args[0].isdigit()
             assert 1 <= int(args[0])
             assert 100 >= int(args[0])
-            self.seconds = int(args[0])
+            self.time = int(args[0])
         except Exception as e:
-            self.seconds = 1
+            self.time = 1
+        self.respond()
 
-    # TODO: Add for Assignment 2
     def solve_cmd(self, args):
         # return b,w,draw,unknown
-        start = time.time()
-        while (time.time() - start) < self.seconds:
-            # do something
-            pass
+        result, move = self.go_engine.solve(self.board, self.time)
+        if move == None:
+            self.respond(result)
+        else:
+            move_coord = point_to_coord(move, self.board.size)
+            move_as_string = format_point(move_coord)
+            self.respond(result, move_as_string)
 
     def gogui_rules_game_id_cmd(self, args):
         self.respond("Gomoku")

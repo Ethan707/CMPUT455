@@ -26,6 +26,11 @@ class Gomoku():
     def get_move(self, board, color):
         return GoBoardUtil.generate_random_move(board, color)
 
+    # TODO: Need implemented
+    def solve(self, board, time):
+        board_copy = board.copy()
+        return result, move
+
 
 def run():
     """
