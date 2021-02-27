@@ -10,21 +10,9 @@ The board uses a 1-dimensional representation with padding
 """
 
 import numpy as np
-from board_util import (
-    GoBoardUtil,
-    BLACK,
-    WHITE,
-    EMPTY,
-    BORDER,
-    PASS,
-    is_black_white,
-    is_black_white_empty,
-    coord_to_point,
-    where1d,
-    MAXSIZE,
-    GO_POINT
-)
-
+from board_util import (GoBoardUtil, BLACK, WHITE, EMPTY, BORDER, PASS,
+                        is_black_white, is_black_white_empty, coord_to_point,
+                        where1d, MAXSIZE, GO_POINT)
 """
 The GoBoard class implements a board and basic functions to play
 moves, check the end of the game, and count the acore at the end.
@@ -34,6 +22,8 @@ For many more utility functions, see the GoBoardUtil class in board_util.py.
 The board is stored as a one-dimensional array of GO_POINT in self.board.
 See GoBoardUtil.coord_to_point for explanations of the array encoding.
 """
+
+
 class GoBoard(object):
     def __init__(self, size):
         """
@@ -55,13 +45,13 @@ class GoBoard(object):
             for pt in range(start, start + self.size):
                 current_row.append(pt)
             self.rows.append(current_row)
-            
+
             start = self.row_start(1) + i - 1
             current_col = []
             for pt in range(start, self.row_start(self.size) + i, self.NS):
                 current_col.append(pt)
             self.cols.append(current_col)
-        
+
         self.diags = []
         # diag towards SE, starting from first row (1,1) moving right to (1,n)
         start = self.row_start(1)
@@ -74,7 +64,8 @@ class GoBoard(object):
             if len(diag_SE) >= 5:
                 self.diags.append(diag_SE)
         # diag towards SE and NE, starting from (2,1) downwards to (n,1)
-        for i in range(start + self.NS, self.row_start(self.size) + 1, self.NS):
+        for i in range(start + self.NS,
+                       self.row_start(self.size) + 1, self.NS):
             diag_SE = []
             diag_NE = []
             pt = i
@@ -97,7 +88,7 @@ class GoBoard(object):
             while self.get_color(pt) == EMPTY:
                 diag_NE.append(pt)
                 pt += -1 * self.NS + 1
-            if len(diag_NE) >=5:
+            if len(diag_NE) >= 5:
                 self.diags.append(diag_NE)
         assert len(self.rows) == self.size
         assert len(self.cols) == self.size
@@ -153,7 +144,7 @@ class GoBoard(object):
             The empty points on the board
         """
         return where1d(self.board == EMPTY)
-    
+
     def get_color_points(self, color):
         """
         Return:
@@ -175,7 +166,7 @@ class GoBoard(object):
         """
         for row in range(1, self.size + 1):
             start = self.row_start(row)
-            board[start : start + self.size] = EMPTY
+            board[start:start + self.size] = EMPTY
 
     def is_eye(self, point, color):
         """
@@ -333,7 +324,7 @@ class GoBoard(object):
             board_moves.append(self.last_move)
         if self.last2_move != None and self.last2_move != PASS:
             board_moves.append(self.last2_move)
-            return 
+            return
 
     def detect_five_in_a_row(self):
         """

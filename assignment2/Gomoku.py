@@ -5,6 +5,11 @@
 from gtp_connection import GtpConnection
 from board_util import GoBoardUtil
 from board import GoBoard
+import signal
+
+
+def handle(num, frame):
+    raise RuntimeError
 
 
 class Gomoku():
@@ -23,13 +28,23 @@ class Gomoku():
         self.name = "GomokuAssignment2"
         self.version = 1.0
 
+    # TODO: Modify the code
     def get_move(self, board, color):
         return GoBoardUtil.generate_random_move(board, color)
 
     # TODO: Need implemented
     def solve(self, board, time):
         board_copy = board.copy()
-        return result, move
+        signal.signal(signal.SIGALRM, handle)
+        signal.alarm(time)
+        try:
+            # TODO:implement the code
+            pass
+        except Exception:
+            # TODO:implement the code
+            pass
+        finally:
+            signal.alarm(0)
 
 
 def run():
