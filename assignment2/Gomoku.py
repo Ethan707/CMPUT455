@@ -5,12 +5,9 @@
 from gtp_connection import GtpConnection
 from board_util import GoBoardUtil
 from board import GoBoard
-from alphabeta import callAlphabeta
+from alphabeta import compute_winner
 import signal
-
-
-def handle(num, frame):
-    raise Exception
+from typing import Tuple
 
 
 class Gomoku():
@@ -37,20 +34,29 @@ class Gomoku():
         else:
             return GoBoardUtil.generate_random_move(board, color)
 
-    # TODO: Need implemented
-    def solve(self, board, time):
-        board_copy = board.copy()
-        signal.signal(signal.SIGALRM, handle)
-        signal.alarm(time)
+
+    def solve(self, board, time_limit: int) -> Tuple[str, int]:
+        """
+        Attempts to compute the winner of the current position, assuming perfect play by both, 
+        within the current time limit.
+        Returns: (winner, move).
+            winner: either b, w, draw, unknown (if solve runs out of the time)
+            move: the first move that achieves the result if the winner is toPlay or it is a draw,
+                -1 if the winner is the opponent of toPlay or its unknown
+        """
+        def timeout_handler(sig, frame):
+            raise TimeoutError
+
+        signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(time_limit)
         try:
-            # TODO:implement the code
-            score, move = callAlphabeta(board_copy)
-            pass
-        except Exception:
-            # TODO:implement the code
-            return "unknown", None
-        finally:
-            signal.alarm(0)
+            # TODO: implement compute_winner
+            winner, move = compute_winner(board.copy())
+        except TimeoutError:
+            # if compute_winner() times out
+            winner, move = "unknown", -1
+
+        return winner, move
 
 
 def run():

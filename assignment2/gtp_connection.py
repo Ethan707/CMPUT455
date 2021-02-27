@@ -38,7 +38,7 @@ class GtpConnection:
         self._debug_mode = debug_mode
         self.go_engine = go_engine
         self.board = board
-        self.time = 1
+        self.time_limit = 1
         self.commands = {
             "protocol_version": self.protocol_version_cmd,
             "quit": self.quit_cmd,
@@ -280,24 +280,35 @@ class GtpConnection:
 
     # TODO: Add for Assignment 2
     def timelimit_cmd(self, args):
+        """
+        GTP command: timelimit <seconds>
+        Sets the maximum time to use for genmove or solve commands, until it is changed by another
+        timelimit command.
+        args[0] should be a int in [1, 100].
+        Response nothing.
+        """
         try:
-            assert args[0].isdigit()
-            assert 1 <= int(args[0])
-            assert 100 >= int(args[0])
-            self.time = int(args[0])
-        except Exception:
-            self.time = 1
+            assert(len(args) == 1)
+            self.time_limit = int(args[0])
+            assert(self.time_limit >= 1 and self.time_limit <= 100)
+        except (AssertionError, ValueError):
+            self.time_limit = 1
         self.respond()
 
-    def solve_cmd(self, args):
-        # return b,w,draw,unknown
-        result, move = self.go_engine.solve(self.board, self.time)
-        if move == None:
-            self.respond(result)
+    def solve_cmd(self, args): 
+        """
+        GTP command: solve
+        Attempts to compute the winner of the current position, assuming perfect play by both, 
+        within the current time limit.
+        Response format: winner [move]
+        """
+        winner, move = self.go_engine.solve(self.board, self.time_limit)
+        if move == -1:
+            move_string = ""
         else:
             move_coord = point_to_coord(move, self.board.size)
-            move_as_string = format_point(move_coord)
-            self.respond(result, move_as_string)
+            move_string = " " + format_point(move_coord)
+        self.respond(winner + move_string)
 
     def gogui_rules_game_id_cmd(self, args):
         self.respond("Gomoku")

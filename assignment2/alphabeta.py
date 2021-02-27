@@ -1,4 +1,7 @@
 import math
+from board import GoBoard
+from typing import Tuple
+
 INFINITY = math.inf
 
 
@@ -19,3 +22,7 @@ def alphabeta(state, alpha, beta):
 # initial call with full window
 def callAlphabeta(rootState):
     return alphabeta(rootState, -INFINITY, INFINITY)
+
+
+def compute_winner(board: GoBoard) -> Tuple[str, int]:
+    raise NotImplementedError
