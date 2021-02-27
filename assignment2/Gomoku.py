@@ -5,11 +5,12 @@
 from gtp_connection import GtpConnection
 from board_util import GoBoardUtil
 from board import GoBoard
+from alphabeta import callAlphabeta
 import signal
 
 
 def handle(num, frame):
-    raise RuntimeError
+    raise Exception
 
 
 class Gomoku():
@@ -29,8 +30,12 @@ class Gomoku():
         self.version = 1.0
 
     # TODO: Modify the code
-    def get_move(self, board, color):
-        return GoBoardUtil.generate_random_move(board, color)
+    def get_move(self, board, color, time):
+        _, move = self.solve(board, time)
+        if move != None:
+            return move
+        else:
+            return GoBoardUtil.generate_random_move(board, color)
 
     # TODO: Need implemented
     def solve(self, board, time):
@@ -39,10 +44,11 @@ class Gomoku():
         signal.alarm(time)
         try:
             # TODO:implement the code
+            score, move = callAlphabeta(board_copy)
             pass
         except Exception:
             # TODO:implement the code
-            pass
+            return "unknown", None
         finally:
             signal.alarm(0)
 

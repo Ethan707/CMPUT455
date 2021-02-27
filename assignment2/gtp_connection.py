@@ -285,7 +285,7 @@ class GtpConnection:
             assert 1 <= int(args[0])
             assert 100 >= int(args[0])
             self.time = int(args[0])
-        except Exception as e:
+        except Exception:
             self.time = 1
         self.respond()
 
