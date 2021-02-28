@@ -94,6 +94,15 @@ class GoBoard(object):
         assert len(self.cols) == self.size
         assert len(self.diags) == (2 * (self.size - 5) + 1) * 2
 
+    def endOfGame(self):
+        if self.get_empty_points(
+        ).size == 0 or self.detect_five_in_a_row() != EMPTY:
+            return True
+        return False
+
+    def undoMove(self, point):
+        self.board[point] = EMPTY
+
     def reset(self, size):
         """
         Creates a start state, an empty board with given size.

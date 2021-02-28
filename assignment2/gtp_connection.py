@@ -9,6 +9,7 @@ at the University of Edinburgh.
 import traceback
 from sys import stdin, stdout, stderr
 import time
+import alphabeta
 from board_util import (
     GoBoardUtil,
     BLACK,
@@ -38,7 +39,8 @@ class GtpConnection:
         self._debug_mode = debug_mode
         self.go_engine = go_engine
         self.board = board
-        self.time = 1
+        self.time_limit = 1
+        self.alphabeta = alphabeta(self.board)
         self.commands = {
             "protocol_version": self.protocol_version_cmd,
             "quit": self.quit_cmd,
@@ -278,20 +280,19 @@ class GtpConnection:
         else:
             self.respond("Illegal move: {}".format(move_as_string))
 
-    # TODO: Add for Assignment 2
     def timelimit_cmd(self, args):
         try:
+            assert len(args) == 1
             assert args[0].isdigit()
-            assert 1 <= int(args[0])
-            assert 100 >= int(args[0])
-            self.time = int(args[0])
+            self.time_limit = int(args[0])
+            assert 1 <= self.time_limit and self.time_limit <= 100
         except Exception:
-            self.time = 1
+            self.time_limit = 1
         self.respond()
 
     def solve_cmd(self, args):
         # return b,w,draw,unknown
-        result, move = self.go_engine.solve(self.board, self.time)
+        result, move = self.go_engine.solve(self.board, self.time_limit, self)
         if move == None:
             self.respond(result)
         else:

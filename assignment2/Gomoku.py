@@ -7,10 +7,7 @@ from board_util import GoBoardUtil
 from board import GoBoard
 from alphabeta import callAlphabeta
 import signal
-
-
-def handle(num, frame):
-    raise Exception
+import alphabeta
 
 
 class Gomoku():
@@ -29,25 +26,24 @@ class Gomoku():
         self.name = "GomokuAssignment2"
         self.version = 1.0
 
-    # TODO: Modify the code
-    def get_move(self, board, color, time):
-        _, move = self.solve(board, time)
+    def get_move(self, board, color, time, alphaBeta: alphabeta):
+        _, move = self.solve(board, time, alphaBeta)
         if move != None:
             return move
         else:
             return GoBoardUtil.generate_random_move(board, color)
 
-    # TODO: Need implemented
-    def solve(self, board, time):
+    def solve(self, board, time_limit, alphaBeta: alphabeta):
+        def timeout_handler(sig, frame):
+            raise TimeoutError
+
+        signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(time_limit)
+
         board_copy = board.copy()
-        signal.signal(signal.SIGALRM, handle)
-        signal.alarm(time)
         try:
-            # TODO:implement the code
-            score, move = callAlphabeta(board_copy)
-            pass
-        except Exception:
-            # TODO:implement the code
+            score, move = alphaBeta.callAlphabeta(board_copy)
+        except TimeoutError:
             return "unknown", None
         finally:
             signal.alarm(0)
