@@ -299,6 +299,7 @@ class GoBoard(object):
         """
         assert is_black_white(self.board[point])
         self.board[point] = EMPTY
+        self.current_player = GoBoardUtil.opponent(self.current_player)
 
     def neighbors_of_color(self, point, color):
         """ List of neighbors of point of given color """

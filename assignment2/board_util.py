@@ -164,6 +164,11 @@ class GoBoardUtil(object):
         return WHITE + BLACK - color
 
     @staticmethod
+    def get_oneD_board(goboard):
+        board2d = GoBoardUtil.get_twoD_board(goboard)
+        return board2d.flatten()
+
+    @staticmethod
     def get_twoD_board(goboard):
         """
         Return: numpy array

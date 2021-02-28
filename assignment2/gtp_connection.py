@@ -260,23 +260,17 @@ class GtpConnection:
         """
         Generate a move for the color args[0] in {'b', 'w'}, for the game of gomoku.
         """
-        result = self.board.detect_five_in_a_row()
-        if result == GoBoardUtil.opponent(self.board.current_player):
-            self.respond("resign")
-            return
-        if self.board.get_empty_points().size == 0:
-            self.respond("pass")
-            return
-        board_color = args[0].lower()
-        color = color_to_int(board_color)
-        move = self.go_engine.get_move(self.board, color)
+        _, move = self.go_engine.solve(self.board, self.time_limit)
+        if move == -1:
+            """
+            toPlay is losing or running out of time, generate a random play
+            """
+            legal_moves = GoBoardUtil.generate_legal_moves(self.board, self.board.current_player)
+            assert(len(legal_moves) != 0)
+            move = legal_moves[np.random.randint(0, len(legal_moves) - 1)]
         move_coord = point_to_coord(move, self.board.size)
-        move_as_string = format_point(move_coord)
-        if self.board.is_legal(move, color):
-            self.board.play_move(move, color)
-            self.respond(move_as_string.lower())
-        else:
-            self.respond("Illegal move: {}".format(move_as_string))
+        move_str = format_point(move_coord)
+        self.respond(move_str)
 
     # TODO: Add for Assignment 2
     def timelimit_cmd(self, args):
