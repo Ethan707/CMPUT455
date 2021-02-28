@@ -5,7 +5,7 @@
 from gtp_connection import GtpConnection
 from board_util import GoBoardUtil
 from board import GoBoard
-from alphabeta import compute_winner
+from boolean_negamax import compute_winner
 import signal
 from typing import Tuple
 
@@ -50,7 +50,6 @@ class Gomoku():
         signal.signal(signal.SIGALRM, timeout_handler)
         signal.alarm(time_limit)
         try:
-            # TODO: implement compute_winner
             winner, move = compute_winner(board.copy())
         except TimeoutError:
             # if compute_winner() times out

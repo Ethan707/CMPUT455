@@ -293,6 +293,13 @@ class GoBoard(object):
         self.last_move = point
         return True
 
+    def undo_move(self, point):
+        """
+        Set the point to EMPTY.
+        """
+        assert is_black_white(self.board[point])
+        self.board[point] = EMPTY
+
     def neighbors_of_color(self, point, color):
         """ List of neighbors of point of given color """
         nbc = []
