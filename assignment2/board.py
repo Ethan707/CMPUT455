@@ -23,7 +23,6 @@ The board is stored as a one-dimensional array of GO_POINT in self.board.
 See GoBoardUtil.coord_to_point for explanations of the array encoding.
 """
 
-
 class GoBoard(object):
     def __init__(self, size):
         """
@@ -143,8 +142,7 @@ class GoBoard(object):
         return score
 
     def endOfGame(self):
-        if self.get_empty_points(
-        ).size == 0 or self.detect_five_in_a_row() != EMPTY:
+        if self.get_empty_points().size == 0 or self.detect_five_in_a_row() != EMPTY:
             return True
         return False
 
@@ -277,11 +275,29 @@ class GoBoard(object):
         assert win_color != self.current_player
 
         if win_color != EMPTY:
-            return -10000000
+            return -100000
+        return self.getHeuristicScore()
 
+    def getHeuristicScore(self):
+        score = 0
+        opponent = GoBoardUtil.opponent(self.current_player)
         lines = self.rows + self.cols + self.diags
-        # Heuristic
-        return evaluate(self.board, lines, self.current_player)
+        for line in lines:
+            for i in range(len(line) - 5):
+                currentPlayerCount = 0
+                opponentCount = 0
+                # count the number of stones on each five-line
+                for p in line[i:i + 5]:
+                    if self.board[p] == self.current_player:
+                        currentPlayerCount += 1
+                    elif self.board[p] == opponent:
+                        opponentCount += 1
+                # Is blocked
+                if currentPlayerCount >= 1 and opponentCount >= 1:
+                    score += 0
+                else:
+                    score += 10 ** currentPlayerCount - 10 ** opponentCount
+        return score
 
     def play_move(self, point, color):
         """
@@ -372,24 +388,3 @@ class GoBoard(object):
             if counter == 5 and prev != EMPTY:
                 return prev
         return EMPTY
-
-
-def evaluate(board, lines, color):
-    SCORE_MAP = [0, 1, 10, 100, 1000, 1000000]
-    score = 0
-    opp_color = BLACK + WHITE - color
-    for line in lines:
-        for i in range(len(line) - 5):
-            player = 0
-            opponent = 0
-            for p in line[i:i + 5]:
-                if board[p] == color:
-                    player += 1
-                elif board[p] == opp_color:
-                    opponent += 1
-            # Is blocked
-            if player >= 1 and opponent >= 1:
-                score += 0
-            else:
-                score += SCORE_MAP[player] - SCORE_MAP[opponent]
-    return score
