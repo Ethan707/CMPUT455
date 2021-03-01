@@ -10,10 +10,11 @@ The board uses a 1-dimensional representation with padding
 """
 
 import numpy as np
+from numpy.lib.function_base import copy
 from board_util import (GoBoardUtil, BLACK, WHITE, EMPTY, BORDER, PASS,
                         is_black_white, is_black_white_empty, coord_to_point,
                         where1d, MAXSIZE, GO_POINT)
-from evaluation import evaluate
+# from evaluation import evaluate
 """
 The GoBoard class implements a board and basic functions to play
 moves, check the end of the game, and count the acore at the end.
@@ -189,28 +190,6 @@ class GoBoard(object):
             start = self.row_start(row)
             board[start:start + self.size] = EMPTY
 
-    def fun1(self):
-        score = 0
-
-        total = self.rows + self.cols + self.diags
-        score_board = np.array([0, 1, 10, 100, 1000, 10000])
-
-        tmp = total
-        score = 0
-        for i in range(len(total)):
-            for j in range(len(total[i])):
-                tmp[i][j] = self.board[total[i][j]]
-        for i in tmp:
-            for j in range(len(i) - 5):
-                row = np.array(i[j:j + 5])
-                positive = np.count_nonzero(row == self.current_player)
-                negative = np.sum(
-                    row == GoBoardUtil.opponent(self.current_player))
-                if positive > 0 and negative > 0:
-                    continue
-                score += (score_board[positive] - score_board[negative])
-        return score
-
     def staticallyEvaluateForToPlay(self):
         win_color = self.detect_five_in_a_row()
         assert win_color != self.current_player
@@ -218,8 +197,9 @@ class GoBoard(object):
         if win_color != EMPTY:
             return -10000000
 
+        lines = self.rows + self.cols + self.diags
         # Heuristic
-        return evaluate(self, self.current_player)
+        return evaluate(self.board, lines, self.current_player)
 
     def play_move(self, point, color):
         """
@@ -310,3 +290,24 @@ class GoBoard(object):
             if counter == 5 and prev != EMPTY:
                 return prev
         return EMPTY
+
+
+def evaluate(board, lines, color):
+    SCORE_MAP = [0, 1, 10, 100, 1000, 1000000]
+    score = 0
+    opp_color = BLACK + WHITE - color
+    for line in lines:
+        for i in range(len(line) - 5):
+            player = 0
+            opponent = 0
+            for p in line[i:i + 5]:
+                if board[p] == color:
+                    player += 1
+                elif board[p] == opp_color:
+                    opponent += 1
+            # Is blocked
+            if player >= 1 and opponent >= 1:
+                score += 0
+            else:
+                score += SCORE_MAP[player] - SCORE_MAP[opponent]
+    return score
