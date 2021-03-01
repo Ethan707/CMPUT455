@@ -2,15 +2,11 @@
 # /usr/bin/python3
 # Set the path to your python3 above
 
-from gtp_connection import GtpConnection
-from board_util import GoBoardUtil
-from board import GoBoard
-from alphabeta import callAlphabeta
 import signal
-
-
-def handle(num, frame):
-    raise Exception
+from gtp_connection import GtpConnection
+from board_util import BLACK, GoBoardUtil, WHITE
+from board import GoBoard
+from alphabeta import call_alphabeta
 
 
 class Gomoku():
@@ -29,28 +25,44 @@ class Gomoku():
         self.name = "GomokuAssignment2"
         self.version = 1.0
 
-    # TODO: Modify the code
-    def get_move(self, board, color, time):
-        _, move = self.solve(board, time)
+    def get_move(self, board: GoBoard, color, time_limit, tt, hasher):
+        _, move = self.solve(board, time_limit, tt, hasher)
+
         if move != None:
             return move
         else:
             return GoBoardUtil.generate_random_move(board, color)
 
-    # TODO: Need implemented
-    def solve(self, board, time):
+    def solve(self, board: GoBoard, time_limit, tt, hasher):
+        def timeout_handler(sig, frame):
+            raise TimeoutError
+
+        signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(time_limit)
         board_copy = board.copy()
-        signal.signal(signal.SIGALRM, handle)
-        signal.alarm(time)
         try:
-            # TODO:implement the code
-            score, move = callAlphabeta(board_copy)
-            pass
-        except Exception:
-            # TODO:implement the code
+            value, move = call_alphabeta(board_copy, tt, hasher)
+
+            if value == 0:
+                # draw
+                return "draw", move
+            if value > 0:
+                # win
+                if board.current_player == BLACK:
+                    return 'b', move
+                if board.current_player == WHITE:
+                    return 'w', move
+            else:
+                opponent = GoBoardUtil.opponent(board.current_player)
+                if opponent == BLACK:
+                    return 'b', None
+                if opponent == WHITE:
+                    return 'w', None
+
+        except TimeoutError:
             return "unknown", None
         finally:
-            signal.alarm(0)
+            signal.alarm(0)  # disable the alarm
 
 
 def run():
