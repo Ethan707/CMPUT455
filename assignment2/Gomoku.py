@@ -2,12 +2,11 @@
 # /usr/bin/python3
 # Set the path to your python3 above
 
-from gtp_connection import GtpConnection
-from board_util import BLACK, WHITE, GoBoardUtil
-from board import GoBoard
-from Alphabeta import alphabeta
-import math
 import signal
+from gtp_connection import GtpConnection
+from board_util import BLACK, GoBoardUtil, WHITE
+from board import GoBoard
+from alphabeta import call_alphabeta
 
 
 class Gomoku():
@@ -26,9 +25,10 @@ class Gomoku():
         self.name = "GomokuAssignment2"
         self.version = 1.0
 
-    def get_move(self, board, color, time_limit, tt, hash):
-        _, move = self.solve(board, time_limit, tt, hash)
-        if move != -1:
+    def get_move(self, board: GoBoard, color, time_limit, tt, hasher):
+        _, move = self.solve(board, time_limit, tt, hasher)
+
+        if move != None:
             return move
         else:
             return GoBoardUtil.generate_random_move(board, color)
@@ -39,12 +39,10 @@ class Gomoku():
 
         signal.signal(signal.SIGALRM, timeout_handler)
         signal.alarm(time_limit)
-
         board_copy = board.copy()
         try:
-            (value, move) = alphabeta(board_copy, -math.inf, math.inf, tt,
-                                      hasher)
-            # print(value, move)
+            value, move = call_alphabeta(board_copy, tt, hasher)
+
             if value == 0:
                 # draw
                 return "draw", move
@@ -60,10 +58,11 @@ class Gomoku():
                     return 'b', None
                 if opponent == WHITE:
                     return 'w', None
-        except Exception:
+
+        except TimeoutError:
             return "unknown", None
         finally:
-            signal.alarm(0)
+            signal.alarm(0)  # disable the alarm
 
 
 def run():

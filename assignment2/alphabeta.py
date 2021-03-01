@@ -1,12 +1,11 @@
-from typing import Tuple
-from board_util import GoBoardUtil
 from board import GoBoard
-from ZobristHash import ZobristHash
-from transposition import TranspositionTable
-import math
+from board_util import GoBoardUtil
+from transpositiontable import TranspositionTable
+from zobrist import ZobristHash
+INFINITY = 10000
 
 
-def storeResult(tt: TranspositionTable, code, result):
+def storeResult(tt, code, result):
     tt.store(code, result)
     return result
 
@@ -20,21 +19,31 @@ def alphabeta(state: GoBoard, alpha, beta, tt: TranspositionTable,
         return result
 
     if state.endOfGame():
-        result = (state.staticallyEvaluateForToPlay(), -1)
-        return storeResult(tt, code, result)
+        result = (state.evaluate(), None)
+        storeResult(tt, code, result)
+        return result
 
-    bestMoves = state.bestMoves()
-    move = bestMoves[0]
-    for m in bestMoves:
-        state.play_move(m, state.current_player)
+    moves = state.get_best_moves()
+    move = moves[0]
+
+    for move in moves:
+        state.play_move(move, state.current_player)
         (value, _) = alphabeta(state, -beta, -alpha, tt, hasher)
         value = -value
         if value > alpha:
             alpha = value
-        state.undoMove(m)
+            move = move
+        state.undoMove(move)
         if value >= beta:
-            result = (alpha, move)
+            result = (beta, move)
             storeResult(tt, code, result)
-            return result  # or value in failsoft (later)
+            return result
+
     result = (alpha, move)
-    return storeResult(tt, code, result)
+    storeResult(tt, code, result)
+    return result
+
+
+# initial call with full window
+def call_alphabeta(rootState, tt, hasher):
+    return alphabeta(rootState, -INFINITY, INFINITY, tt, hasher)

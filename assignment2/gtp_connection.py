@@ -6,13 +6,8 @@ Parts of this code were originally based on the gtp module
 in the Deep-Go project by Isaac Henrion and Amos Storkey 
 at the University of Edinburgh.
 """
-from board import GoBoard
 import traceback
 from sys import stdin, stdout, stderr
-import time
-import Alphabeta
-from ZobristHash import ZobristHash
-from transposition import TranspositionTable
 from board_util import (
     GoBoardUtil,
     BLACK,
@@ -23,12 +18,13 @@ from board_util import (
     MAXSIZE,
     coord_to_point,
 )
-import numpy as np
 import re
+from transpositiontable import TranspositionTable
+from zobrist import ZobristHash
 
 
 class GtpConnection:
-    def __init__(self, go_engine, board: GoBoard, debug_mode=False):
+    def __init__(self, go_engine, board, debug_mode=False):
         """
         Manage a GTP connection for a Go-playing engine
 
@@ -42,9 +38,11 @@ class GtpConnection:
         self._debug_mode = debug_mode
         self.go_engine = go_engine
         self.board = board
-        self.time_limit = 1
+        self.time_limit = 30
         self.hasher = ZobristHash(self.board.size)
         self.tt = TranspositionTable()
+        self.oldBoardSize = self.board.size
+
         self.commands = {
             "protocol_version": self.protocol_version_cmd,
             "quit": self.quit_cmd,
@@ -59,7 +57,7 @@ class GtpConnection:
             "list_commands": self.list_commands_cmd,
             "play": self.play_cmd,
             "legal_moves": self.legal_moves_cmd,
-            "timelimit": self.timelimit_cmd,
+            "timelimit": self.time_limit_cmd,
             "solve": self.solve_cmd,
             "gogui-rules_game_id": self.gogui_rules_game_id_cmd,
             "gogui-rules_board_size": self.gogui_rules_board_size_cmd,
@@ -80,7 +78,19 @@ class GtpConnection:
             "genmove": (1, "Usage: genmove {w,b}"),
             "play": (2, "Usage: play {b,w} MOVE"),
             "legal_moves": (1, "Usage: legal_moves {w,b}"),
+            "timelimit": (1, 'Usage: set time limit as an integer'),
+            "solve": (0, 'No arguments necessary for solve')
         }
+
+    def solve_cmd(self, args):
+        outcome, move = self.go_engine.solve(self.board, self.time_limit,
+                                             self.tt, self.hasher)
+
+        if move == None:
+            self.respond("{}".format(outcome))
+        else:
+            move = format_point(point_to_coord(move, self.board.size))
+            self.respond("{} {}".format(outcome, move))
 
     def write(self, data):
         stdout.write(data)
@@ -196,7 +206,6 @@ class GtpConnection:
             self.hasher = ZobristHash(size)
             self.tt = TranspositionTable()
         self.reset(size)
-
         self.respond()
 
     def showboard_cmd(self, args):
@@ -235,6 +244,12 @@ class GtpConnection:
             gtp_moves.append(format_point(coords))
         sorted_moves = " ".join(sorted(gtp_moves))
         self.respond(sorted_moves)
+
+    def time_limit_cmd(self, args):
+        assert 1 <= int(args[0]) <= 100
+        limit = int(args[0])
+        self.time_limit = limit
+        self.respond()
 
     def play_cmd(self, args):
         """
@@ -285,30 +300,9 @@ class GtpConnection:
         move_as_string = format_point(move_coord)
         if self.board.is_legal(move, color):
             self.board.play_move(move, color)
-            self.respond(move_as_string.lower())
+            self.respond(move_as_string)
         else:
             self.respond("Illegal move: {}".format(move_as_string))
-
-    def timelimit_cmd(self, args):
-        try:
-            assert len(args) == 1
-            assert args[0].isdigit()
-            self.time_limit = int(args[0])
-            assert 1 <= self.time_limit and self.time_limit <= 100
-        except Exception:
-            self.time_limit = 1
-        self.respond()
-
-    def solve_cmd(self, args):
-        # return b,w,draw,unknown
-        result, move = self.go_engine.solve(self.board, self.time_limit,
-                                            self.tt, self.hasher)
-        if move == None:
-            self.respond(result)
-        else:
-            move_coord = point_to_coord(move, self.board.size)
-            move_as_string = format_point(move_coord)
-            self.respond(result + " " + move_as_string)
 
     def gogui_rules_game_id_cmd(self, args):
         self.respond("Gomoku")
@@ -439,3 +433,13 @@ def color_to_int(c):
         return color_to_int[c]
     except:
         raise KeyError("\"{}\" wrong color".format(c))
+
+
+def color_to_string(c):
+    """convert color to the appropriate character"""
+    color_to_string = {BLACK: 'b', WHITE: 'w', EMPTY: 'e', BORDER: 'BORDER'}
+
+    try:
+        return color_to_string[c]
+    except:
+        raise KeyError("\"{}\" invalid color".format(c))
