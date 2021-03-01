@@ -10,6 +10,7 @@ The board uses a 1-dimensional representation with padding
 """
 
 import numpy as np
+import math
 from board_util import (GoBoardUtil, BLACK, WHITE, EMPTY, BORDER, PASS,
                         is_black_white, is_black_white_empty, coord_to_point,
                         where1d, MAXSIZE, GO_POINT)
@@ -102,6 +103,41 @@ class GoBoard(object):
 
     def undoMove(self, point):
         self.board[point] = EMPTY
+        self.current_player = GoBoardUtil.opponent(self.current_player)
+
+    def bestMoves(self):
+        arr = self.get_empty_points()
+        return sorted(arr, key=self.move_score, reverse=True)
+
+    def move_score(self, move):
+        self.play_move(move, self.current_player)
+        score = -self.staticallyEvaluateForToPlay()  # opponent round
+        self.undoMove(move)
+        return score
+
+    def staticallyEvaluateForToPlay(self):
+        win_color = self.detect_five_in_a_row()
+        assert win_color != self.current_player
+        if win_color != EMPTY:
+            return -math.inf
+        else:
+            score = self.evaluate()
+            return score
+
+    def evaluate(self):
+        score = 0
+
+        A = self.current_player
+        B = GoBoardUtil.opponent(self.current_player)
+
+        total = self.rows + self.cols + self.diags
+        total = np.array(total)
+        row, col = total.shape
+        for index in range(col - 5):
+            player = np.count_nonzero(total[:, index:index + 5] == A, axis=1)
+            opponent = np.count_nonzero(total[:, index:index + 5] == B, axis=1)
+            score += np.sum()
+        return score
 
     def reset(self, size):
         """

@@ -3,11 +3,11 @@
 # Set the path to your python3 above
 
 from gtp_connection import GtpConnection
-from board_util import GoBoardUtil
+from board_util import BLACK, WHITE, GoBoardUtil
 from board import GoBoard
-from alphabeta import callAlphabeta
+from Alphabeta import alphabeta
+import math
 import signal
-import alphabeta
 
 
 class Gomoku():
@@ -26,14 +26,14 @@ class Gomoku():
         self.name = "GomokuAssignment2"
         self.version = 1.0
 
-    def get_move(self, board, color, time, alphaBeta: alphabeta):
-        _, move = self.solve(board, time, alphaBeta)
-        if move != None:
+    def get_move(self, board, color, time_limit, tt, hash):
+        _, move = self.solve(board, time_limit, tt, hash)
+        if move != -1:
             return move
         else:
             return GoBoardUtil.generate_random_move(board, color)
 
-    def solve(self, board, time_limit, alphaBeta: alphabeta):
+    def solve(self, board: GoBoard, time_limit, tt, hasher):
         def timeout_handler(sig, frame):
             raise TimeoutError
 
@@ -42,8 +42,25 @@ class Gomoku():
 
         board_copy = board.copy()
         try:
-            score, move = alphaBeta.callAlphabeta(board_copy)
-        except TimeoutError:
+            (value, move) = alphabeta(board_copy, -math.inf, math.inf, tt,
+                                      hasher)
+            # print(value, move)
+            if value == 0:
+                # draw
+                return "draw", move
+            if value > 0:
+                # win
+                if board.current_player == BLACK:
+                    return 'b', move
+                if board.current_player == WHITE:
+                    return 'w', move
+            else:
+                opponent = GoBoardUtil.opponent(board.current_player)
+                if opponent == BLACK:
+                    return 'b', None
+                if opponent == WHITE:
+                    return 'w', None
+        except Exception:
             return "unknown", None
         finally:
             signal.alarm(0)

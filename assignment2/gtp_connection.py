@@ -6,10 +6,13 @@ Parts of this code were originally based on the gtp module
 in the Deep-Go project by Isaac Henrion and Amos Storkey 
 at the University of Edinburgh.
 """
+from board import GoBoard
 import traceback
 from sys import stdin, stdout, stderr
 import time
-import alphabeta
+import Alphabeta
+from ZobristHash import ZobristHash
+from transposition import TranspositionTable
 from board_util import (
     GoBoardUtil,
     BLACK,
@@ -25,7 +28,7 @@ import re
 
 
 class GtpConnection:
-    def __init__(self, go_engine, board, debug_mode=False):
+    def __init__(self, go_engine, board: GoBoard, debug_mode=False):
         """
         Manage a GTP connection for a Go-playing engine
 
@@ -40,7 +43,8 @@ class GtpConnection:
         self.go_engine = go_engine
         self.board = board
         self.time_limit = 1
-        self.alphabeta = alphabeta(self.board)
+        self.hasher = ZobristHash(self.board.size)
+        self.tt = TranspositionTable()
         self.commands = {
             "protocol_version": self.protocol_version_cmd,
             "quit": self.quit_cmd,
@@ -187,7 +191,12 @@ class GtpConnection:
         """
         Reset the game with new boardsize args[0]
         """
-        self.reset(int(args[0]))
+        size = int(args[0])
+        if size != self.board.size:
+            self.hasher = ZobristHash(size)
+            self.tt = TranspositionTable()
+        self.reset(size)
+
         self.respond()
 
     def showboard_cmd(self, args):
@@ -257,7 +266,6 @@ class GtpConnection:
         except Exception as e:
             self.respond("illegal move: {}".format(str(e).replace('\'', '')))
 
-    # TODO: Modify for Assignment 2
     def genmove_cmd(self, args):
         """
         Generate a move for the color args[0] in {'b', 'w'}, for the game of gomoku.
@@ -271,7 +279,8 @@ class GtpConnection:
             return
         board_color = args[0].lower()
         color = color_to_int(board_color)
-        move = self.go_engine.get_move(self.board, color)
+        move = self.go_engine.get_move(self.board, color, self.time_limit,
+                                       self.tt, self.hasher)
         move_coord = point_to_coord(move, self.board.size)
         move_as_string = format_point(move_coord)
         if self.board.is_legal(move, color):
@@ -292,13 +301,14 @@ class GtpConnection:
 
     def solve_cmd(self, args):
         # return b,w,draw,unknown
-        result, move = self.go_engine.solve(self.board, self.time_limit, self)
+        result, move = self.go_engine.solve(self.board, self.time_limit,
+                                            self.tt, self.hasher)
         if move == None:
             self.respond(result)
         else:
             move_coord = point_to_coord(move, self.board.size)
             move_as_string = format_point(move_coord)
-            self.respond(result, move_as_string)
+            self.respond(result + " " + move_as_string)
 
     def gogui_rules_game_id_cmd(self, args):
         self.respond("Gomoku")
