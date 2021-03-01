@@ -43,6 +43,5 @@ def alphabeta(state: GoBoard, alpha, beta, tt: TranspositionTable,
     return result
 
 
-# initial call with full window
 def call_alphabeta(rootState, tt, hasher):
     return alphabeta(rootState, -10000, 10000, tt, hasher)
