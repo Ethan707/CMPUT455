@@ -133,14 +133,14 @@ class GoBoard(object):
         self.board[point] = EMPTY
         self.current_player = GoBoardUtil.opponent(self.current_player)
 
-    def get_best_moves(self):
-        moves = self.get_empty_points()
-        return sorted(moves, key=self._move_score, reverse=True)
+    def bestMoves(self):
+        arr = self.get_empty_points()
+        return sorted(arr, key=self.move_score, reverse=True)
 
-    def _move_score(self, m):
-        self.play_move(m, self.current_player)
-        score = -self.evaluate()
-        self.undoMove(m)
+    def move_score(self, move):
+        self.play_move(move, self.current_player)
+        score = -self.staticallyEvaluateForToPlay()
+        self.undoMove(move)
         return score
 
     def endOfGame(self):
@@ -211,7 +211,7 @@ class GoBoard(object):
                 score += (score_board[positive] - score_board[negative])
         return score
 
-    def evaluate(self):
+    def staticallyEvaluateForToPlay(self):
         win_color = self.detect_five_in_a_row()
         assert win_color != self.current_player
 

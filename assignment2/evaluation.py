@@ -1,5 +1,7 @@
 import collections
 from board_util import BLACK, WHITE, EMPTY
+import copy
+import numpy as np
 
 SCORE_MAP = [0, 1, 10, 100, 1000, 1000000]
 
@@ -35,11 +37,25 @@ def get_counts(board, five_line):
 
 
 def evaluate(board, color):
-
     score = 0
-    total = board.rows + board.cols + board.diags
+    # A = color
+    # B = BLACK + WHITE - A
+    lines = board.rows + board.cols + board.diags
 
-    for line in total:
+    # tmp = copy.deepcopy(lines)
+    # for i in range(len(lines)):
+    #     for j in range(len(lines[i])):
+    #         point = lines[i][j]
+    #         tmp[i][j] = board.board[point]
+    #     for k in range(len(tmp[i]) - 4):
+    #         positive = tmp[k:k + 5].count(A)
+    #         negative = tmp[k:k + 5].count(B)
+    #         if positive > 0 and negative > 0:
+    #             continue
+    #         score += (SCORE_MAP[positive] - SCORE_MAP[negative])
+
+    # print(tmp)
+    for line in lines:
         for i in range(len(line) - 5):
             counts = get_counts(board, line[i:i + 5])
             score += calc_score(counts, color)

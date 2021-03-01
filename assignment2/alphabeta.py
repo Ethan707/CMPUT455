@@ -2,7 +2,6 @@ from board import GoBoard
 from board_util import GoBoardUtil
 from transpositiontable import TranspositionTable
 from zobrist import ZobristHash
-INFINITY = 10000
 
 
 def storeResult(tt, code, result):
@@ -19,11 +18,11 @@ def alphabeta(state: GoBoard, alpha, beta, tt: TranspositionTable,
         return result
 
     if state.endOfGame():
-        result = (state.evaluate(), None)
+        result = (state.staticallyEvaluateForToPlay(), None)
         storeResult(tt, code, result)
         return result
 
-    moves = state.get_best_moves()
+    moves = state.bestMoves()
     move = moves[0]
 
     for move in moves:
@@ -46,4 +45,4 @@ def alphabeta(state: GoBoard, alpha, beta, tt: TranspositionTable,
 
 # initial call with full window
 def call_alphabeta(rootState, tt, hasher):
-    return alphabeta(rootState, -INFINITY, INFINITY, tt, hasher)
+    return alphabeta(rootState, -10000, 10000, tt, hasher)
