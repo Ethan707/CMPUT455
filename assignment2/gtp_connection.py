@@ -38,7 +38,7 @@ class GtpConnection:
         self._debug_mode = debug_mode
         self.go_engine = go_engine
         self.board = board
-        self.time_limit = 30
+        self.time_limit = 1
         self.hasher = ZobristHash(self.board.size)
         self.tt = TranspositionTable()
         self.oldBoardSize = self.board.size
@@ -78,19 +78,9 @@ class GtpConnection:
             "genmove": (1, "Usage: genmove {w,b}"),
             "play": (2, "Usage: play {b,w} MOVE"),
             "legal_moves": (1, "Usage: legal_moves {w,b}"),
-            "timelimit": (1, 'Usage: set time limit as an integer'),
-            "solve": (0, 'No arguments necessary for solve')
+            "timelimit": (1, "Usage: timelimit {interger i} 1<=i<=100"),
+            "solve": (0, "Usage: No argument")
         }
-
-    def solve_cmd(self, args):
-        outcome, move = self.go_engine.solve(self.board, self.time_limit,
-                                             self.tt, self.hasher)
-
-        if move == None:
-            self.respond("{}".format(outcome))
-        else:
-            move = format_point(point_to_coord(move, self.board.size))
-            self.respond("{} {}".format(outcome, move))
 
     def write(self, data):
         stdout.write(data)
@@ -246,10 +236,24 @@ class GtpConnection:
         self.respond(sorted_moves)
 
     def time_limit_cmd(self, args):
-        assert 1 <= int(args[0]) <= 100
-        limit = int(args[0])
-        self.time_limit = limit
+        try:
+            assert len(args) == 1
+            assert args[0].isdigit()
+            assert 1 <= int(args[0]) and int(args[0]) <= 100
+            self.time_limit = int(args[0])
+        except Exception:
+            self.time_limit = 1
         self.respond()
+
+    def solve_cmd(self, args):
+        outcome, move = self.go_engine.solve(self.board, self.time_limit,
+                                             self.tt, self.hasher)
+
+        if move == None:
+            self.respond("{}".format(outcome))
+        else:
+            move = format_point(point_to_coord(move, self.board.size))
+            self.respond("{} {}".format(outcome, move))
 
     def play_cmd(self, args):
         """
@@ -433,13 +437,3 @@ def color_to_int(c):
         return color_to_int[c]
     except:
         raise KeyError("\"{}\" wrong color".format(c))
-
-
-def color_to_string(c):
-    """convert color to the appropriate character"""
-    color_to_string = {BLACK: 'b', WHITE: 'w', EMPTY: 'e', BORDER: 'BORDER'}
-
-    try:
-        return color_to_string[c]
-    except:
-        raise KeyError("\"{}\" invalid color".format(c))
