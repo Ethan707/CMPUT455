@@ -293,9 +293,7 @@ class GoBoard(object):
                     elif self.board[p] == opponent:
                         opponentCount += 1
                 # Is blocked
-                if currentPlayerCount >= 1 and opponentCount >= 1:
-                    score += 0
-                else:
+                if currentPlayerCount < 1 or opponentCount < 1:
                     score += 10 ** currentPlayerCount - 10 ** opponentCount
         return score
 
