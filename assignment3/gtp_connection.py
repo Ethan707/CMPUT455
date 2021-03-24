@@ -21,6 +21,7 @@ from board_util import (
 import numpy as np
 import re
 
+from simulation import generateRuleBasedMoves, generateRandomMove
 
 class GtpConnection:
     def __init__(self, go_engine, board, debug_mode=False):
@@ -37,6 +38,7 @@ class GtpConnection:
         self._debug_mode = debug_mode
         self.go_engine = go_engine
         self.board = board
+        self.policy_is_random = True    # the playout policy
         self.commands = {
             "protocol_version": self.protocol_version_cmd,
             "quit": self.quit_cmd,
@@ -47,6 +49,8 @@ class GtpConnection:
             "komi": self.komi_cmd,
             "version": self.version_cmd,
             "known_command": self.known_command_cmd,
+            "policy": self.policy_cmd,
+            "policy_moves": self.policy_moves_cmd,
             "genmove": self.genmove_cmd,
             "list_commands": self.list_commands_cmd,
             "play": self.play_cmd,
@@ -67,6 +71,8 @@ class GtpConnection:
             "boardsize": (1, "Usage: boardsize INT"),
             "komi": (1, "Usage: komi FLOAT"),
             "known_command": (1, "Usage: known_command CMD_NAME"),
+            "policy": (1, "Usage: policy random/rulebased"),
+            "policy_moves": (0, "Usage: policy_moves"),
             "genmove": (1, "Usage: genmove {w,b}"),
             "play": (2, "Usage: play {b,w} MOVE"),
             "legal_moves": (1, "Usage: legal_moves {w,b}"),
@@ -250,10 +256,49 @@ class GtpConnection:
         except Exception as e:
             self.respond("illegal move: {}".format(str(e).replace('\'','')))
     
+    def policy_cmd(self, args):
+        """
+        Sets the playout policy to be used from now on to the given type. 
+        The argument policytype is either "random" or "rulebased".
+        """
+        assert(len(args) == 1)
+        if (args[0] == "random"):
+            self.policy_is_random = True
+        elif (args[0] == "rulebased"):
+            self.policy_is_random = False
+        else:
+            self.respond("Invalid policy, the argument should be either random or rulebased")
+            return
+        self.respond("Playout policy is set to " + args[0])
+
+
+    def policy_moves_cmd(self, args):
+        """
+        Prints the set of moves considered by the simulation policy for the current player in the current position.
+        Print format: <moveType> <moveList>.
+        moveType should be one of: {Win, BlockWin, OpenFour, BlockOpenFour, Random},
+        moveList should be sorted alphabetically.
+        """
+        assert(len(args) == 0)
+        def move_to_str(move: int):
+            move_coord = point_to_coord(move, self.board.size)
+            return format_point(move_coord)
+
+        if (self.policy_is_random):
+            random_move = generateRandomMove(self.board)
+            self.respond("Random " + move_to_str(random_move))
+            return
+        
+        move_type, move_list = generateRuleBasedMoves(self.board)
+        move_str_list = list(map(move_to_str, sorted(move_list)))
+        self.respond(move_type + " " + " ".join(move_str_list))
+        
+
     def genmove_cmd(self, args):
         """
         Generate a move for the color args[0] in {'b', 'w'}, for the game of gomoku.
         """
+        raise NotImplementedError
         result = self.board.detect_five_in_a_row()
         if result == GoBoardUtil.opponent(self.board.current_player):
             self.respond("resign")
