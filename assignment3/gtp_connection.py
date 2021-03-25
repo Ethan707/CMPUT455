@@ -259,12 +259,12 @@ class GtpConnection:
     def policy_cmd(self, args):
         """
         Sets the playout policy to be used from now on to the given type. 
-        The argument policytype is either "random" or "rulebased".
+        The argument policytype is either "random" or "rule_based".
         """
         assert(len(args) == 1)
         if (args[0] == "random"):
             self.policy_is_random = True
-        elif (args[0] == "rulebased"):
+        elif (args[0] == "rule_based"):
             self.policy_is_random = False
         else:
             self.respond("Invalid policy, the argument should be either random or rulebased")
@@ -298,7 +298,7 @@ class GtpConnection:
         """
         Generate a move for the color args[0] in {'b', 'w'}, for the game of gomoku.
         """
-        raise NotImplementedError
+        # TODO: to be implemented
         result = self.board.detect_five_in_a_row()
         if result == GoBoardUtil.opponent(self.board.current_player):
             self.respond("resign")
