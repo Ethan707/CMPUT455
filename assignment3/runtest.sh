@@ -1,3 +1,4 @@
 # change the python3 path if necessary
 python3="python3"
-gogui-regress "${python3} Gomoku.py" assignment3-public-tests.gtp
+test_file="assignment3-public-tests.gtp"
+gogui-regress "${python3} Gomoku.py" ${test_file}
