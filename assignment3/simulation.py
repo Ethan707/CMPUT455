@@ -6,6 +6,7 @@ from board_util import GoBoardUtil, EMPTY
 
 # logEngine = LogEngine()
 
+
 def generateRuleBasedMoves(board: GoBoard) -> Tuple[str, List[int]]:
     """
     return: (MoveType, MoveList)
@@ -17,21 +18,22 @@ def generateRuleBasedMoves(board: GoBoard) -> Tuple[str, List[int]]:
     result = checkWin(board, lines)
     if (len(result) > 0):
         return ("Win", result)
-    
+
     result = checkBlockWin(board, lines)
     if (len(result) > 0):
         return ("BlockWin", result)
-    
+
     result = checkOpenFour(board, lines)
     if (len(result) > 0):
         return ("OpenFour", result)
-    
+
     result = checkBlockOpenFour(board, lines)
     if (len(result) > 0):
         return ("BlockOpenFour", result)
 
     result = [generateRandomMove(board)]
     return ("Random", result)
+
 
 def checkWin(board: GoBoard, lines: List[List[int]]) -> List[int]:
     """
@@ -66,7 +68,8 @@ def checkBlockWin(board: GoBoard, lines: List[List[int]]) -> List[int]:
     oo.oo, .oooo.
     """
     current = board.current_player
-    board.current_player = GoBoardUtil.opponent(current)    # change to the opponent point of view
+    board.current_player = GoBoardUtil.opponent(
+        current)    # change to the opponent point of view
     blocking_moves = checkWin(board, lines)
     board.current_player = current  # reset
     return blocking_moves
@@ -107,7 +110,8 @@ def checkBlockOpenFour(board: GoBoard, lines: List[List[int]]) -> List[int]:
     Check if the opponent can create an open four, return all blocking moves if exist, [] otherwise.
     """
     current = board.current_player
-    board.current_player = GoBoardUtil.opponent(current)    # change to the opponent point of view
+    board.current_player = GoBoardUtil.opponent(
+        current)    # change to the opponent point of view
     blocking_moves = checkOpenFour(board, lines)
     board.current_player = current  # reset
     return blocking_moves
@@ -119,7 +123,9 @@ def generateRandomMove(board: GoBoard) -> int:
     return -1 if the borad is full.
     """
     # TODO: to be implemented!
-    return 1
+    empty_points = board.get_empty_points()
+    if len(empty_points) == 0:
+        return None
 
 
 def getLinePositions(board: GoBoard) -> List[List[int]]:

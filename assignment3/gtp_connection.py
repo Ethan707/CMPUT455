@@ -23,6 +23,7 @@ import re
 
 from simulation import generateRuleBasedMoves, generateRandomMove
 
+
 class GtpConnection:
     def __init__(self, go_engine, board, debug_mode=False):
         """
@@ -118,7 +119,8 @@ class GtpConnection:
                 self.commands[command_name](args)
             except Exception as e:
                 self.debug_msg("Error executing command {}\n".format(str(e)))
-                self.debug_msg("Stack Trace:\n{}\n".format(traceback.format_exc()))
+                self.debug_msg("Stack Trace:\n{}\n".format(
+                    traceback.format_exc()))
                 raise e
         else:
             self.debug_msg("Unknown command: {}\n".format(command_name))
@@ -225,7 +227,7 @@ class GtpConnection:
             gtp_moves.append(format_point(coords))
         sorted_moves = " ".join(sorted(gtp_moves))
         self.respond(sorted_moves)
-        
+
     def play_cmd(self, args):
         """
         play a move args[1] for given color args[0] in {'b','w'}
@@ -246,7 +248,8 @@ class GtpConnection:
                 self.respond("unknown: {}".format(args[1]))
                 return
             if not self.board.play_move(move, color):
-                self.respond("illegal move: \"{}\" occupied".format(args[1].lower()))
+                self.respond(
+                    "illegal move: \"{}\" occupied".format(args[1].lower()))
                 return
             else:
                 self.debug_msg(
@@ -254,8 +257,8 @@ class GtpConnection:
                 )
             self.respond()
         except Exception as e:
-            self.respond("illegal move: {}".format(str(e).replace('\'','')))
-    
+            self.respond("illegal move: {}".format(str(e).replace('\'', '')))
+
     def policy_cmd(self, args):
         """
         Sets the playout policy to be used from now on to the given type. 
@@ -267,10 +270,10 @@ class GtpConnection:
         elif (args[0] == "rule_based"):
             self.policy_is_random = False
         else:
-            self.respond("Invalid policy, the argument should be either random or rulebased")
+            self.respond(
+                "Invalid policy, the argument should be either random or rulebased")
             return
         self.respond("Playout policy is set to " + args[0])
-
 
     def policy_moves_cmd(self, args):
         """
@@ -280,19 +283,23 @@ class GtpConnection:
         moveList should be sorted alphabetically.
         """
         assert(len(args) == 0)
+
         def move_to_str(move: int):
             move_coord = point_to_coord(move, self.board.size)
             return format_point(move_coord)
+
+        if self.board.detect_five_in_a_row() != EMPTY or len(self.board.get_empty_points()) == 0:
+            self.respond("")
+            return
 
         if (self.policy_is_random):
             random_move = generateRandomMove(self.board)
             self.respond("Random " + move_to_str(random_move))
             return
-        
+
         move_type, move_list = generateRuleBasedMoves(self.board)
         move_str_list = list(map(move_to_str, sorted(move_list)))
         self.respond(move_type + " " + " ".join(move_str_list))
-        
 
     def genmove_cmd(self, args):
         """
@@ -383,6 +390,7 @@ class GtpConnection:
                      "pstring/Show Board/gogui-rules_board\n"
                      )
 
+
 def point_to_coord(point, boardsize):
     """
     Transform point given as board array index 
@@ -441,7 +449,7 @@ def move_to_coord(point_str, board_size):
 def color_to_int(c):
     """convert character to the appropriate integer code"""
     color_to_int = {"b": BLACK, "w": WHITE, "e": EMPTY, "BORDER": BORDER}
-    
+
     try:
         return color_to_int[c]
     except:
