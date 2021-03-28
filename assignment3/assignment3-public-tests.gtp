@@ -214,7 +214,7 @@ play W D1
 play B A4
 play W D2
 play B A5
-policy rule_based 
+policy rule_based
 
 140 policy_moves
 #?[BlockOpenFour A2 A6]

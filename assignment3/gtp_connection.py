@@ -21,8 +21,6 @@ from board_util import (
 import numpy as np
 import re
 
-from simulation import generateRuleBasedMoves, generateRandomMove
-
 
 class GtpConnection:
     def __init__(self, go_engine, board, debug_mode=False):
@@ -119,8 +117,7 @@ class GtpConnection:
                 self.commands[command_name](args)
             except Exception as e:
                 self.debug_msg("Error executing command {}\n".format(str(e)))
-                self.debug_msg("Stack Trace:\n{}\n".format(
-                    traceback.format_exc()))
+                self.debug_msg("Stack Trace:\n{}\n".format(traceback.format_exc()))
                 raise e
         else:
             self.debug_msg("Unknown command: {}\n".format(command_name))
@@ -248,13 +245,10 @@ class GtpConnection:
                 self.respond("unknown: {}".format(args[1]))
                 return
             if not self.board.play_move(move, color):
-                self.respond(
-                    "illegal move: \"{}\" occupied".format(args[1].lower()))
+                self.respond("illegal move: \"{}\" occupied".format(args[1].lower()))
                 return
             else:
-                self.debug_msg(
-                    "Move: {}\nBoard:\n{}\n".format(board_move, self.board2d())
-                )
+                self.debug_msg("Move: {}\nBoard:\n{}\n".format(board_move, self.board2d()))
             self.respond()
         except Exception as e:
             self.respond("illegal move: {}".format(str(e).replace('\'', '')))
@@ -270,8 +264,7 @@ class GtpConnection:
         elif (args[0] == "rule_based"):
             self.policy_is_random = False
         else:
-            self.respond(
-                "Invalid policy, the argument should be either random or rulebased")
+            self.respond("Invalid policy, the argument should be either random or rulebased")
             return
         self.respond("Playout policy is set to " + args[0])
 
@@ -293,12 +286,14 @@ class GtpConnection:
             return
 
         if (self.policy_is_random):
-            random_move = generateRandomMove(self.board)
-            self.respond("Random " + move_to_str(random_move))
+            move_str_list = list(map(move_to_str, self.board.get_empty_points()))
+            move_str_list.sort()
+            self.respond("Random " + " ".join(move_str_list))
             return
 
-        move_type, move_list = generateRuleBasedMoves(self.board)
-        move_str_list = list(map(move_to_str, sorted(move_list)))
+        move_type, move_list = self.go_engine.generateRuleBasedMoves(self.board, self.board.current_player)
+        move_str_list = list(map(move_to_str, move_list))
+        move_str_list.sort()
         self.respond(move_type + " " + " ".join(move_str_list))
 
     def genmove_cmd(self, args):
@@ -320,7 +315,7 @@ class GtpConnection:
         move_as_string = format_point(move_coord)
         if self.board.is_legal(move, color):
             self.board.play_move(move, color)
-            self.respond(move_as_string.lower())
+            self.respond(move_as_string)
         else:
             self.respond("Illegal move: {}".format(move_as_string))
 
@@ -393,7 +388,7 @@ class GtpConnection:
 
 def point_to_coord(point, boardsize):
     """
-    Transform point given as board array index 
+    Transform point given as board array index
     to (row, col) coordinate representation.
     Special case: PASS is not transformed
     """

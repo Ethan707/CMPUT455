@@ -2,9 +2,13 @@
 # /usr/bin/python3
 # Set the path to your python3 above
 
+from typing import List, Tuple
+import random
+
 from gtp_connection import GtpConnection
-from board_util import GoBoardUtil
+from board_util import GoBoardUtil, EMPTY
 from board import GoBoard
+import numpy as np
 
 
 class Gomoku():
@@ -20,11 +24,189 @@ class Gomoku():
         version : float
             version number (used by the GTP interface).
         """
-        self.name = "GomokuAssignment2"
+        self.name = "GomokuAssignment3"
         self.version = 1.0
+        self.NUM_SIMULATION = 10     # N = 10
 
-    def get_move(self, board, color):
-        return GoBoardUtil.generate_random_move(board, color)
+    def get_move(self, board: GoBoardUtil, color: int) -> int:
+        # it has empty points
+        moves = self.generateRuleBasedMoves(board, color)[1]
+        numWins = []
+        for move in moves:
+            numWins.append(self.simulate(board, move, color))
+        index = np.argmax(numWins)
+        return moves[index]
+
+    def generateRuleBasedMoves(self, board: GoBoard, color) -> Tuple[str, List[int]]:
+        """
+        return: (MoveType, MoveList)
+        MoveType: {"Win", "BlockWin", "OpenFour", "BlockOpenFour", "Random"}
+        MoveList: an unsorted List[int], each element is a move
+        """
+        self.board = board
+        self.lines = self.getLinePositions()
+        result = self.checkWin(color)
+        if (len(result) > 0):
+            return ("Win", result)
+
+        result = self.checkBlockWin(color)
+        if (len(result) > 0):
+            return ("BlockWin", result)
+
+        result = self.checkOpenFour(color)
+        if (len(result) > 0):
+            return ("OpenFour", result)
+
+        result = self.checkBlockOpenFour(color)
+        if (len(result) > 0):
+            return ("BlockOpenFour", result)
+
+        # result = [self.generateRandomMove(board)]
+        result = self.board.get_empty_points()
+        return ("Random", result)
+
+    def checkWin(self, player) -> List[int]:
+        """
+        Check if the current player can win directly, return all winning moves if exist, [] otherwise.
+        """
+        # current = player
+        opponent = GoBoardUtil.opponent(player)
+        winning_moves = []
+        for line in self.lines:
+            for i in range(len(line) - 4):
+                emptyPos = -1
+                for pos in line[i: i + 5]:  # get five consecutive positions in a line
+                    color = self.board.get_color(pos)
+                    if color == EMPTY:
+                        if emptyPos == -1:
+                            emptyPos = pos
+                        else:   # more than 1 empty pos in this line
+                            emptyPos = -1
+                            break
+                    elif color == opponent:
+                        emptyPos = -1
+                        break
+                if emptyPos != -1 and emptyPos not in winning_moves:
+                    winning_moves.append(emptyPos)
+        return winning_moves
+
+    def checkBlockWin(self, player) -> List[int]:
+        """
+        Check if the opponent can win directly, return all blocking moves if exist, [] otherwise.
+        e.g.
+        oo.oo, .oooo.
+        """
+        # current = self.board.current_player
+        self.board.current_player = GoBoardUtil.opponent(player)    # change to the opponent point of view
+        blocking_moves = self.checkWin(self.board.current_player)
+        self.board.current_player = player     # reset the current player
+        return blocking_moves
+
+    def checkOpenFour(self, player) -> List[int]:
+        """
+        Check if the current player can create an open four, i.e. .xxxx.,
+        return all such moves if exist, [] otherwise.
+        """
+        # current = self.board.current_player
+        opponent = GoBoardUtil.opponent(player)
+        winning_moves = []
+        for line in self.lines:
+            for i in range(len(line) - 5):  # get six consecutive positions in a line
+                # check if the first and the last are empty
+                if self.board.get_color(line[i]) != EMPTY or self.board.get_color(line[i + 5]) != EMPTY:
+                    continue
+                emptyPos = -1
+                for pos in line[i + 1: i + 5]:
+                    color = self.board.get_color(pos)
+                    if color == EMPTY:
+                        if emptyPos == -1:
+                            emptyPos = pos
+                        else:   # more than 1 empty pos in this line
+                            emptyPos = -1
+                            break
+                    elif color == opponent:
+                        emptyPos = -1
+                        break
+                if emptyPos != -1 and emptyPos not in winning_moves:
+                    winning_moves.append(emptyPos)
+        return winning_moves
+
+    def checkBlockOpenFour(self, player: int) -> List[int]:
+        """
+        Check if the opponent can create an open four, return all blocking moves if exist, [] otherwise.
+        """
+        # current = self.board.current_player
+        opponent = GoBoardUtil.opponent(player)
+        blocking_moves = []
+        for line in self.lines:
+            for i in range(len(line) - 5):  # get six consecutive positions in a line
+                # check if the first and the last are empty
+                if self.board.get_color(line[i]) != EMPTY or self.board.get_color(line[i + 5]) != EMPTY:
+                    continue
+                emptyPos = -1
+                for pos in line[i + 1: i + 5]:
+                    color = self.board.get_color(pos)
+                    if color == EMPTY:
+                        if emptyPos == -1:
+                            emptyPos = pos
+                        else:   # more than 1 empty pos in this line
+                            emptyPos = -1
+                            break
+                    elif color == player:
+                        emptyPos = -1
+                        break
+                if emptyPos != -1:
+                    moves = [emptyPos]
+                    if i == 0:
+                        # e.g. for |.XX.X., blocking moves can be 0, 3, 5, | indicates the border
+                        moves.append(line[5])
+                        if emptyPos != line[1]:
+                            moves.append(line[0])
+                    elif i == len(line) - 6:
+                        # e.g. for .XX.X.|, blocking moves can be 0, 3, 5, | indicates the border
+                        moves.append(line[i])
+                        if emptyPos != line[i + 4]:
+                            moves.append(line[i + 5])
+                    for move in moves:
+                        if move not in blocking_moves:
+                            blocking_moves.append(move)
+
+        return blocking_moves
+
+    def simulate(self, board: GoBoard, move: int, color: int) -> int:
+        """
+        The current player plays a stone at first_move, then two players play at random till the game is over.
+        Returns the winner, either BLACK, WHITE, or EMPTY (draw).
+
+        This function uses random.randrange() to choose a move at random. 
+        According to the python docs, randrange() is sophisticated about producing equally distributed (uniformly) values 
+        since python 3.2.
+        Reference: https://docs.python.org/3/library/random.html#random.randint
+        """
+        times = 0
+        for _ in range(self.NUM_SIMULATION):
+            board_copy = board.copy()
+            board_copy.play_move(move, color)
+            while board_copy.detect_five_in_a_row() == EMPTY and len(board_copy.get_empty_points()) != 0:
+                i, best_moves = self.generateRuleBasedMoves(board_copy, board_copy.current_player)
+                random_move = random.choice(best_moves)
+                board_copy.play_move(random_move, board_copy.current_player)
+                if board_copy.detect_five_in_a_row() == color:
+                    times += 1
+        return times
+
+    def getLinePositions(self) -> List[List[int]]:
+        """
+        Get the positions of each row, col, and diagonal.
+        """
+        lines = []
+        for line in self.board.rows:
+            lines.append(line)
+        for line in self.board.cols:
+            lines.append(line)
+        for line in self.board.diags:
+            lines.append(line)
+        return lines
 
 
 def run():
