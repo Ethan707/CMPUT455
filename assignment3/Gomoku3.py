@@ -28,14 +28,17 @@ class Gomoku():
         self.version = 1.0
         self.NUM_SIMULATION = 10     # N = 10
 
-    def get_move(self, board: GoBoardUtil, color: int) -> int:
+    def get_move(self, board: GoBoard, color: int) -> int:
         # it has empty points
         moves = self.generateRuleBasedMoves(board, color)[1]
-        numWins = []
+        best_move = 0
+        best_score = -1
         for move in moves:
-            numWins.append(self.simulate(board, move, color))
-        index = np.argmax(numWins)
-        return moves[index]
+            score = self.simulate(board, move, color)
+            if score > best_score:
+                best_move = move
+                best_score = score
+        return best_move
 
     def generateRuleBasedMoves(self, board: GoBoard, color) -> Tuple[str, List[int]]:
         """
@@ -173,27 +176,35 @@ class Gomoku():
 
         return blocking_moves
 
-    def simulate(self, board: GoBoard, move: int, color: int) -> int:
+    def simulate(self, board: GoBoard, first_move: int, color: int) -> int:
         """
         The current player plays a stone at first_move, then two players play at random till the game is over.
-        Returns the winner, either BLACK, WHITE, or EMPTY (draw).
+        Returns the score of the first_move. (score = (NUM_SIMULATION + 1) * num_wins + num_draws)
+        i.e. perfer the one with highest winrate, and break ties using the number of draws.
 
-        This function uses random.randrange() to choose a move at random. 
-        According to the python docs, randrange() is sophisticated about producing equally distributed (uniformly) values 
-        since python 3.2.
-        Reference: https://docs.python.org/3/library/random.html#random.randint
+        This function uses random.choice() to choose a move at random.
+        random.choice(seq) is equivalent to seq[random.randrange(0, len(seq))], but less computation.
+        According to the python docs, randrange() is sophisticated about producing equally distributed (uniformly) 
+        values since python 3.2.
+        Reference: https://docs.python.org/3/library/random.html#random.randrange
         """
-        times = 0
+        num_wins = 0
+        num_draws = 0
         for _ in range(self.NUM_SIMULATION):
             board_copy = board.copy()
-            board_copy.play_move(move, color)
-            while board_copy.detect_five_in_a_row() == EMPTY and len(board_copy.get_empty_points()) != 0:
-                i, best_moves = self.generateRuleBasedMoves(board_copy, board_copy.current_player)
-                random_move = random.choice(best_moves)
+            board_copy.play_move(first_move, color)
+            winner = board_copy.detect_five_in_a_row()
+            while winner == EMPTY and len(board_copy.get_empty_points()) != 0:
+                moves = self.generateRuleBasedMoves(board_copy, board_copy.current_player)[1]
+                random_move = random.choice(moves)
                 board_copy.play_move(random_move, board_copy.current_player)
-                if board_copy.detect_five_in_a_row() == color:
-                    times += 1
-        return times
+                winner = board_copy.detect_five_in_a_row()
+            if winner == color:
+                num_wins += 1
+            elif winner == EMPTY:
+                num_draws += 1
+        return num_wins * (self.NUM_SIMULATION + 1) + num_draws
+
 
     def getLinePositions(self) -> List[List[int]]:
         """
