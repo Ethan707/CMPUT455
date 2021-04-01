@@ -286,12 +286,11 @@ class GtpConnection:
             return
 
         if (self.policy_is_random):
-            move_str_list = list(map(move_to_str, self.board.get_empty_points()))
-            move_str_list.sort()
-            self.respond("Random " + " ".join(move_str_list))
-            return
-
-        move_type, move_list = self.go_engine.generateRuleBasedMoves(self.board, self.board.current_player)
+            move_type = "Random"
+            move_list = self.board.get_empty_points()
+        else:   # rule based
+            move_type, move_list = self.go_engine.generateRuleBasedMoves(self.board, self.board.current_player)
+        
         move_str_list = list(map(move_to_str, move_list))
         move_str_list.sort()
         self.respond(move_type + " " + " ".join(move_str_list))
@@ -300,7 +299,6 @@ class GtpConnection:
         """
         Generate a move for the color args[0] in {'b', 'w'}, for the game of gomoku.
         """
-        # TODO: to be implemented
         result = self.board.detect_five_in_a_row()
         if result == GoBoardUtil.opponent(self.board.current_player):
             self.respond("resign")
