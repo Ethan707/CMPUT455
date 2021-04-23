@@ -4,85 +4,103 @@ import random
 from board_util import GoBoardUtil, EMPTY
 from simple_board import SimpleGoBoard
 
-NUM_SIMULATION = 5000
+NUM_SIMULATION = 3000
 
 class NodeData:
-    def __init__(self, winner: int, moves: List[int]):
-        self.winner = winner
+    def __init__(self, winner: int = -1, moves: List[int] = [], numVisited: int = 0, numWins: int = 0):
+        self.winner = winner # BLACK, WHITE, DRAW if this is a terminal state, -1 otherwise
         self.moves = moves
+        self.numVisited = numVisited
+        self.numWins = numWins
 
-class MCTS:
-    def __init__(self, board: SimpleGoBoard):
-        self.board = board
+
+class MCTSEngine:
+    def __init__(self):
         """
         self.table: dict
             key: hashKey: int
             value: List[NodeData] (len 3, index: BLACK or WHITE)
         """
         self.table = dict()
-    
+        self.numSimulation = NUM_SIMULATION
 
-    def getMove(self) -> int:
+
+    def getMove(self, board: SimpleGoBoard) -> int:
         # if already done, pass
-        legal_moves = GoBoardUtil.generate_legal_moves_gomoku(self.board)
+        legal_moves = GoBoardUtil.generate_legal_moves_gomoku(board)
         if len(legal_moves) == 0:
             return 0
-        isEnd, winner = self.board.check_game_end_gomoku()
+        if len(legal_moves) == 49:  # empty board
+            return 36 # D4, the center
+        isEnd, winner = board.check_game_end_gomoku()
         if isEnd:
             return 0
-        return self.simulate()
+        
+        return self.runSimulation(board)
 
 
-    def simulate(self) -> int:
-        scores = {}
-        toPlay = self.board.current_player
-        firstMoves = self.computeFirstMoves()
-        if len(firstMoves) == 0:
-            return 0
-        for i in range(NUM_SIMULATION):
-            boardCopy = self.board.copy()
-            move, winner = self.simulateOnce(boardCopy, firstMoves)
-            if move not in scores:
-                scores[move] = 0
-            if winner == EMPTY:
-                scores[move] += 1
-            elif winner == toPlay:
-                scores[move] += 100
-            else:
-                scores[move] -= 100
-        highestScore = -10000000
-        bestMove = 0
-        for move, score in scores.items():
-            if score > highestScore:
-                highestScore = score
+    def saveToDict(self, hashKey: int, toplay: int, data: NodeData) -> None:
+        if hashKey not in self.table:
+            self.table[hashKey] = [None, None, None]
+        self.table[hashKey][toplay] = data
+
+
+    def getNodeData(self, hashKey: int, toplay: int) -> NodeData:
+        if hashKey not in self.table:
+            self.table[hashKey] = [None, None, None]
+        data = self.table[hashKey][toplay]
+        if data == None:
+            data = NodeData()
+            self.table[hashKey][toplay] = data
+        return data
+
+    
+    def runSimulation(self, board: SimpleGoBoard) -> None:
+        firstMoves, winner = self.computeMoves(board)
+        toplay = board.current_player
+        if winner != -1:
+            return random.choice(firstMoves)
+        if len(firstMoves) == 1:
+            return firstMoves[0]
+        
+        toPlay = board.current_player
+        for i in range(self.numSimulation):
+            boardCopy = board.copy()
+            firstMove = random.choice(firstMoves)
+            boardCopy.play_move_gomoku(firstMove, boardCopy.current_player)
+            hashKey = hash(boardCopy)
+            winner = self.simulate(boardCopy)
+            data = self.getNodeData(hashKey, toplay)
+            data.numVisited += 1
+            if winner == toplay:
+                data.numWins += 1
+
+        highest = 0
+        bestMove = 0 # TODO: 0 for debugging, replace with -> random.choice(firstMoves)
+        for move in firstMoves:
+            board.board[move] = toplay
+            hashKey = hash(board)
+            board.board[move] = EMPTY
+            if hashKey not in self.table:
+                continue
+            data = self.table[hashKey][toplay]
+            if data == None:
+                continue
+            winrate = data.numWins / data.numVisited
+            if winrate > highest:
+                highest = winrate
                 bestMove = move
         return bestMove
-    
-    def computeFirstMoves(self):
-        boardCopy = self.board.copy()
-        toPlay = boardCopy.current_player
-        legal_moves = GoBoardUtil.generate_legal_moves_gomoku(boardCopy)
-        winner, moves = self.filterMoves(boardCopy, legal_moves, toPlay)
-        return moves
-    
-    def simulateOnce(self, board: SimpleGoBoard, firstMoves: List[int]) -> int:
-        """
-        Return (move, winner)
-        """
-        # randomly make a move
-        firstMove = random.choice(firstMoves)
-        toPlay = board.current_player
-        board.board[firstMove] = toPlay
-        board.current_player = GoBoardUtil.opponent(toPlay)
 
+
+    def simulate(self, board: SimpleGoBoard) -> int:
         while True:
             hashKey = hash(board)
             toPlay = board.current_player
             if hashKey not in self.table:
                 self.table[hashKey] = [None, None, None]
             if self.table[hashKey][toPlay] == None:
-                legal_moves = GoBoardUtil.generate_legal_moves_gomoku(board)
-                winner, moves = self.filterMoves(board, legal_moves, toPlay)
+                moves, winner = self.computeMoves(board)
                 data = NodeData(winner, moves)
                 self.table[hashKey][toPlay] = data
 
@@ -93,7 +111,18 @@ class MCTS:
                 board.board[move] = toPlay
                 board.current_player = GoBoardUtil.opponent(toPlay)
             else:   # winner can be determined
-                return firstMove, data.winner
+                return data.winner
+
+
+    def computeMoves(self, board: SimpleGoBoard) -> Tuple[List[int], int]:
+        legal_moves = GoBoardUtil.generate_legal_moves_gomoku(board)
+        if len(legal_moves) == 0:
+            return [], EMPTY    # draw
+        isEnd, winner = board.check_game_end_gomoku()
+        if isEnd:
+            return [], winner
+        # TODO: implement filters
+        return legal_moves, -1
 
 
     def filterMoves(self, board: SimpleGoBoard, legal_moves: List[int], color: int) -> Tuple[int, List[int]]:

@@ -5,7 +5,7 @@
 from gtp_connection import GtpConnection
 from board_util import GoBoardUtil, EMPTY
 from simple_board import SimpleGoBoard
-from mcts import MCTS
+from mcts import MCTSEngine
 
 import random
 import numpy as np
@@ -46,6 +46,7 @@ class GomokuSimulationPlayer(object):
         self.name="Gomoku3"
         self.version = 3.0
         self.best_move=None
+        self.mcts_engine = MCTSEngine()
     
     def set_playout_policy(self, playout_policy='random'):
         assert(playout_policy in ['random', 'rule_based'])
@@ -90,8 +91,7 @@ class GomokuSimulationPlayer(object):
         The genmove function called by gtp_connection.
         returns the move to play.
         """
-        mctsEngine = MCTS(board)
-        move = mctsEngine.getMove()
+        move = self.mcts_engine.getMove(board)
         return move
 
 
