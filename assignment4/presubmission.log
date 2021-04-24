@@ -1,0 +1,22 @@
+Script started on 2021-04-23 22:45:07-07:00 [TERM="xterm-256color" TTY="/dev/pts/1" COLUMNS="80" LINES="24"]
+]0;dulong@ubuntu: ~/Desktop/C455/CMPUT455/assignment4[01;32mdulong@ubuntu[00m:[01;34m~/Desktop/C455/CMPUT455/assignment4[00m$ pytho3[Kn3 play.py 
+player1: DontReadMe/Gomoku4.py
+player2: random_player/Gomoku2.py
+Game:  1
+D4
+B1
+A5
+G6
+D5
+E6
+D6
+E7
+D3
+E4
+D2
+player1 wins
+player1 win 1 player2 win 0 draw 0
+]0;dulong@ubuntu: ~/Desktop/C455/CMPUT455/assignment4[01;32mdulong@ubuntu[00m:[01;34m~/Desktop/C455/CMPUT455/assignment4[00m$ exit
+exit
+
+Script done on 2021-04-23 22:48:14-07:00 [COMMAND_EXIT_CODE="0"]
