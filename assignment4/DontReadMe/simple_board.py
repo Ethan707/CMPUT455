@@ -16,6 +16,8 @@ from board_util import GoBoardUtil, BLACK, WHITE, EMPTY, BORDER, \
 import alphabeta
 
 class SimpleGoBoard(object):
+    def __hash__(self) -> int:
+        return hash(str(self.board))
 
     def get_color(self, point):
         return self.board[point]

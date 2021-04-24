@@ -1,0 +1,5 @@
+player 1: DontReadMe/Gomoku4.py
+player 2: random_player/Gomoku2.py
+player 1 wins 1
+player 2 wins 0
+draw 0
