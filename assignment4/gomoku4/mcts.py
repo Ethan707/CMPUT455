@@ -5,7 +5,10 @@ import signal
 from board_util import GoBoardUtil, EMPTY, BORDER
 from simple_board import SimpleGoBoard
 
-NUM_SIMULATION = 500
+# configs
+NUM_SIMULATION = 1000
+SIMULATION_TIME_LIMIT = 50 # seconds
+
 
 class NodeData:
     def __init__(self, winner: int = -1, moves: List[int] = [], numVisited: int = 0, numWins: int = 0):
@@ -28,20 +31,13 @@ class MCTSEngine:
 
 
     def getMove(self, board: SimpleGoBoard) -> int:
-        # if already done, pass
+        # it is garenteed that there is at least one possible move
         legal_moves = GoBoardUtil.generate_legal_moves_gomoku(board)
-        if len(legal_moves) == 0:
-            return 99   # should never reach this
         if len(legal_moves) == 49:  # empty board
             return 36 # D4, the center
-        if len(legal_moves) % 10 == 0:
-            self.numSimulation = int(self.numSimulation * 1.2)  # simulate more!
-        isEnd, winner = board.check_game_end_gomoku()
-        if isEnd:
-            return 99   # should never reach this
         
         try:
-            signal.alarm(45)
+            signal.alarm(SIMULATION_TIME_LIMIT)
             bestMove = self.runSimulation(board)
             signal.alarm(0)
         except:
@@ -94,7 +90,6 @@ class MCTSEngine:
         if len(firstMoves) == 1:
             return firstMoves[0]
         
-        toPlay = board.current_player
         for i in range(self.numSimulation):
             boardCopy = board.copy()
             firstMove = random.choice(firstMoves)
