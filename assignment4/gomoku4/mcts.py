@@ -25,11 +25,7 @@ class MCTSEngine:
         self.table = dict()
         self.numSimulation = NUM_SIMULATION
         self.initLines()
-        signal.signal(signal.SIGALRM, self.handleSigAlrm)
 
-
-    def handleSigAlrm(self):
-        self.bestMove = self.getBestMove(self.board, self.moves)
 
     def getMove(self, board: SimpleGoBoard) -> int:
         # if already done, pass
@@ -44,10 +40,13 @@ class MCTSEngine:
         if isEnd:
             return 99   # should never reach this
         
-        signal.alarm(45)
-        self.bestMove = self.runSimulation(board)
-        signal.alarm(0)
-        return self.bestMove
+        try:
+            signal.alarm(45)
+            bestMove = self.runSimulation(board)
+            signal.alarm(0)
+        except:
+            bestMove = self.getBestMove(board, legal_moves)
+        return bestMove
 
     def getBestMove(self, board: SimpleGoBoard, moves: List[int]) -> int:
         highest = 0
@@ -90,8 +89,6 @@ class MCTSEngine:
     def runSimulation(self, board: SimpleGoBoard) -> None:
         toplay = board.current_player
         firstMoves, winner = self.computeMoves(board, toplay)
-        self.moves = firstMoves
-        self.board = board
         if winner != -1:
             return random.choice(firstMoves)
         if len(firstMoves) == 1:
