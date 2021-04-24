@@ -35,14 +35,14 @@ class MCTSEngine:
         # if already done, pass
         legal_moves = GoBoardUtil.generate_legal_moves_gomoku(board)
         if len(legal_moves) == 0:
-            return 0
+            return 99   # should never reach this
         if len(legal_moves) == 49:  # empty board
             return 36 # D4, the center
         if len(legal_moves) % 10 == 0:
             self.numSimulation = int(self.numSimulation * 1.2)  # simulate more!
         isEnd, winner = board.check_game_end_gomoku()
         if isEnd:
-            return 0
+            return 99   # should never reach this
         
         signal.alarm(45)
         self.bestMove = self.runSimulation(board)
@@ -51,7 +51,7 @@ class MCTSEngine:
 
     def getBestMove(self, board: SimpleGoBoard, moves: List[int]) -> int:
         highest = 0
-        bestMove = 0 # TODO: 0 for debugging, replace with -> random.choice(firstMoves)
+        bestMove = 0
         toplay = board.current_player
         for move in moves:
             board.board[move] = toplay
@@ -66,6 +66,8 @@ class MCTSEngine:
             if winrate > highest:
                 highest = winrate
                 bestMove = move
+        if bestMove == 0:
+            return random.choice(moves)
         return bestMove
 
 
@@ -127,6 +129,9 @@ class MCTSEngine:
                 board.board[move] = toplay
                 board.current_player = GoBoardUtil.opponent(toplay)
             else:   # winner can be determined
+                data.numVisited += 1
+                if toplay == data.winner:
+                    data.numWins += 1
                 return data.winner
 
 
