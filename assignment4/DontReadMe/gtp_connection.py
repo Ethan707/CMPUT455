@@ -14,6 +14,8 @@ import numpy as np
 import re
 import signal
 
+import sys, os
+
 class GtpConnection():
 
     def __init__(self, go_engine, board, debug_mode = False):
@@ -58,7 +60,7 @@ class GtpConnection():
             "policy": self.set_playout_policy, 
             "policy_moves": self.display_pattern_moves
         }
-        self.timelimit=2
+        self.timelimit=60
 
         # used for argument checking
         # values: (required number of arguments, 
@@ -324,14 +326,10 @@ class GtpConnection():
             self.respond("pass")
             return
         move=None
-        try:
-            signal.alarm(int(self.timelimit))
-            self.sboard = self.board.copy()
-            move = self.go_engine.get_move(self.board, color)
-            self.board=self.sboard
-            signal.alarm(0)
-        except Exception as e:
-            move=self.go_engine.best_move
+        
+        self.sboard = self.board.copy()
+        move = self.go_engine.get_move(self.board, color)
+        self.board=self.sboard
 
         if move == PASS:
             self.respond("pass")

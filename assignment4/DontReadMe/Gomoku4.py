@@ -5,6 +5,7 @@
 from gtp_connection import GtpConnection
 from board_util import GoBoardUtil, EMPTY
 from simple_board import SimpleGoBoard
+from mcts import MCTSEngine
 
 import random
 import numpy as np
@@ -45,6 +46,7 @@ class GomokuSimulationPlayer(object):
         self.name="Gomoku3"
         self.version = 3.0
         self.best_move=None
+        self.mcts_engine = MCTSEngine()
     
     def set_playout_policy(self, playout_policy='random'):
         assert(playout_policy in ['random', 'rule_based'])
@@ -84,36 +86,14 @@ class GomokuSimulationPlayer(object):
             assert(res == GoBoardUtil.opponent(color_to_play))
             return -1.0
 
-    def get_move(self, board, color_to_play):
+    def get_move(self, board: SimpleGoBoard, color_to_play: int) -> int:
         """
-        The genmove function called by gtp_connection
+        The genmove function called by gtp_connection.
+        returns the move to play.
         """
-        moves=GoBoardUtil.generate_legal_moves_gomoku(board)
-        toplay=board.current_player
-        best_result, best_move=-1.1, None
-        best_move=moves[0]
-        wins = np.zeros(len(moves))
-        visits = np.zeros(len(moves))
-        while True:
-            for i, move in enumerate(moves):
-                play_move(board, move, toplay)
-                res=game_result(board)
-                if res == toplay:
-                    undo(board, move)
-                    #This move is a immediate win
-                    self.best_move=move
-                    return move
-                ret=self._do_playout(board, toplay)
-                wins[i] += ret
-                visits[i] += 1
-                win_rate = wins[i] / visits[i]
-                if win_rate > best_result:
-                    best_result=win_rate
-                    best_move=move
-                    self.best_move=best_move
-                undo(board, move)
-        assert(best_move is not None)
-        return best_move
+        move = self.mcts_engine.getMove(board)
+        return move
+
 
 def run():
     """

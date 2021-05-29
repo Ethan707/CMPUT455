@@ -1,6 +1,7 @@
 import pexpect
 
-player1='flat_mc_player/Gomoku3.py'
+player1 = "DontReadMe/Gomoku4.py"
+# player2='flat_mc_player/Gomoku3.py'
 player2='random_player/Gomoku2.py'
 
 win1=0
@@ -78,7 +79,7 @@ def playSingleGame(alternative=False):
             assert(status=='unknown')
     return result,numTimeout
 
-def playGames(numGame=10):
+def playGames(numGame=1):
     global win1,win2,draw,numTimeout
     print("player1:",player1)
     print("player2:",player2)
